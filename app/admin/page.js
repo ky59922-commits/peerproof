@@ -1,10 +1,14 @@
 'use client';
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { useRequireAdmin } from "@/lib/useRequireAdmin";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
 import { N, AM, BL, GR, RD, TEL, TE, MU, BR, ASSESSMENTS, STC, STL, ffH } from "@/lib/theme";
 
 export default function Admin() {
   const router = useRouter();
+  const { checking, adminName } = useRequireAdmin();
+
   const judges = [
     { code: "A", field: "Machine Learning / AI", level: "PhD", sessions: 12, rating: "4.8", univ: "University of Tokyo" },
     { code: "B", field: "Molecular Biology", level: "PostDoc", sessions: 7, rating: "4.9", univ: "Kyoto University" },
@@ -12,9 +16,27 @@ export default function Admin() {
     { code: "D", field: "Machine Learning / AI", level: "Master", sessions: 3, rating: "4.6", univ: "University of Tokyo" },
   ];
 
+  async function logout() {
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+  }
+
+  if (checking) {
+    return <PW><div style={{ padding: 60, textAlign: "center", color: MU }}>Checking access…</div></PW>;
+  }
+
   return (
     <PW>
-      <TopBar label="PLATFORM ADMIN" sub="Operations dashboard" />
+      <TopBar
+        label="PLATFORM ADMIN"
+        sub={`Operations dashboard${adminName ? ` — ${adminName}` : ""}`}
+        action={
+          <div style={{ display: "flex", gap: 10 }}>
+            <Btn ch="Applications" onClick={() => router.push("/admin/applications")} />
+            <Btn ch="Log out" v="ghost" onClick={logout} />
+          </div>
+        }
+      />
       <div style={{ padding: "24px 36px", display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 8 }}>
         <Stat label="Total assessments" val={47} color={N} />
         <Stat label="Pending" val={12} color={AM} />

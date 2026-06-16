@@ -1,20 +1,53 @@
 'use client';
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Badge, Card, PW } from "@/components/ui";
-import { N, GR, MU, TX, RD, AM, BL, RDL, ASSESSMENTS, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
+import { N, GR, MU, TX, RD, AM, BL, RDL, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
 
 function ResultContent() {
   const router = useRouter();
   const params = useSearchParams();
   const id = params.get("id");
-  const sel = ASSESSMENTS.find(a => a.id === id) || ASSESSMENTS[0];
+  const { checking } = useRequireCompanyUser();
+  const [assessment, setAssessment] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!sel?.result) {
-    return <PW><div style={{ padding: 40, color: MU }}>No result found for this assessment.</div></PW>;
+  useEffect(() => {
+    if (checking || !id) return;
+    async function load() {
+      const { data, error } = await supabase
+        .from("assessments")
+        .select("*, results(*)")
+        .eq("id", id)
+        .maybeSingle();
+      if (!error) setAssessment(data);
+      setLoading(false);
+    }
+    load();
+  }, [checking, id]);
+
+  if (checking || loading) {
+    return <PW><div style={{ padding: 60, textAlign: "center", color: MU }}>Loading…</div></PW>;
   }
 
-  const { k, d, notes } = sel.result;
+  const result = assessment?.results?.[0];
+
+  if (!assessment || !result) {
+    return (
+      <PW>
+        <div style={{ maxWidth: 600, margin: "60px auto", padding: "0 24px" }}>
+          <button onClick={() => router.push("/hr")} style={{ background: "none", border: "none", cursor: "pointer", color: MU, fontSize: 13, marginBottom: 20, fontFamily: ff }}>← Dashboard</button>
+          <p style={{ color: MU }}>No result available yet for this assessment.</p>
+        </div>
+      </PW>
+    );
+  }
+
+  const k = result.knowledge_score;
+  const d = result.delta_score;
+  const notes = result.judge_notes;
   const ki = KNOWLEDGE[k];
   const di = DELTA.find(x => x.v === d);
   const pct = ((d + 3) / 6) * 100;
@@ -25,8 +58,8 @@ function ResultContent() {
         <button onClick={() => router.push("/hr")} style={{ background: "none", border: "none", cursor: "pointer", color: MU, fontSize: 13, marginBottom: 20, fontFamily: ff }}>← Dashboard</button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
           <div>
-            <h1 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N }}>{sel.candidate.name}</h1>
-            <p style={{ color: MU, fontSize: 14, marginTop: 4 }}>{sel.candidate.field} · {sel.candidate.degree} · {sel.candidate.univ}</p>
+            <h1 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N }}>{assessment.candidate_name}</h1>
+            <p style={{ color: MU, fontSize: 14, marginTop: 4 }}>{assessment.candidate_field} · {assessment.candidate_degree} · {assessment.candidate_university}</p>
           </div>
           <Badge label="Completed" color={GR} />
         </div>

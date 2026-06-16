@@ -11,7 +11,7 @@ export default function Landing() {
         <div style={{ fontSize: 60, fontFamily: ffH, fontWeight: 800, color: TE, lineHeight: 1 }}>Δ</div>
         <h1 style={{ fontFamily: ffH, fontSize: 44, fontWeight: 800, margin: "12px 0 8px" }}>PeerProof</h1>
         <p style={{ color: "#94a3b8", fontSize: 19, maxWidth: 520, margin: "0 auto 36px" }}>Academic credentials verified by real graduate students — not paperwork.</p>
-        <Btn ch="Request an assessment" sz="lg" onClick={() => router.push("/hr/new")} />
+        <Btn ch="Apply for an account" sz="lg" onClick={() => router.push("/apply")} />
       </div>
 
       <div style={{ padding: "64px 40px", maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
@@ -25,9 +25,9 @@ export default function Landing() {
         <h2 style={{ fontFamily: ffH, fontSize: 24, fontWeight: 800, textAlign: "center", color: N, marginBottom: 36 }}>How it works</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, maxWidth: 900, margin: "0 auto" }}>
           {[
-            ["1", "You submit", "Share the candidate's name, email, degree level, and field. No account needed."],
-            ["2", "We match", "A verified grad student or postdoc in the same sub-field is assigned. Both get a private link by email."],
-            ["3", "You receive", "A recorded session + structured report with Knowledge Score and Delta Score within 24 hours."],
+            ["1", "You apply", "Tell us about your company. We review every application personally to keep quality high."],
+            ["2", "You're approved", "We send your company a unique account code. Your HR team signs up with it — up to 5 people."],
+            ["3", "You request & receive", "Submit a candidate for verification. A matched peer reviewer runs the session, and you get a structured report within 24 hours."],
           ].map(([n, t, b]) => (
             <Card key={n}>
               <div style={{ width: 32, height: 32, borderRadius: "50%", background: TEL, color: TE, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginBottom: 14 }}>{n}</div>
@@ -68,8 +68,8 @@ export default function Landing() {
 
       <div style={{ background: N, padding: "56px 40px", textAlign: "center", color: W }}>
         <h2 style={{ fontFamily: ffH, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Ready to verify a candidate?</h2>
-        <p style={{ color: "#94a3b8", marginBottom: 28 }}>No subscription. No account. Pay per assessment.</p>
-        <Btn ch="Get started" sz="lg" onClick={() => router.push("/hr/new")} />
+        <p style={{ color: "#94a3b8", marginBottom: 28 }}>Apply for an account — no public signup, every company is reviewed.</p>
+        <Btn ch="Apply for an account" sz="lg" onClick={() => router.push("/apply")} />
       </div>
     </div>
   );

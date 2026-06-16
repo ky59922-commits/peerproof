@@ -1,15 +1,49 @@
 'use client';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Card, Sep, PW } from "@/components/ui";
 import { N, TE, MU, BR, RD, TEL, FIELDS, DEGREES, ffH, ff } from "@/lib/theme";
 
 export default function HRNew() {
   const router = useRouter();
+  const { checking, user } = useRequireCompanyUser();
   const [f, setF] = useState({ name: "", email: "", degree: "Undergraduate", field: "Machine Learning / AI", univ: "", notes: "" });
   const [ok, setOk] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const upd = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   const inp = { width: "100%", padding: "9px 12px", borderRadius: 8, border: `1.5px solid ${BR}`, fontSize: 14, fontFamily: ff, boxSizing: "border-box" };
+
+  async function submit() {
+    if (!f.name || !f.email) {
+      setError("Please fill in the candidate's name and email.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    const { error: insertError } = await supabase.from("assessments").insert({
+      company_id: user.companyId,
+      created_by: user.membershipId,
+      candidate_name: f.name,
+      candidate_email: f.email,
+      candidate_degree: f.degree,
+      candidate_field: f.field,
+      candidate_university: f.univ || null,
+      hr_notes: f.notes || null,
+    });
+    setSubmitting(false);
+    if (insertError) {
+      setError("Something went wrong: " + insertError.message);
+      return;
+    }
+    setOk(true);
+  }
+
+  if (checking) {
+    return <PW><div style={{ padding: 60, textAlign: "center", color: MU }}>Checking access…</div></PW>;
+  }
 
   if (ok) {
     return (
@@ -18,7 +52,7 @@ export default function HRNew() {
           <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#f0fdf4", color: "#16a34a", fontSize: 26, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>✓</div>
           <h2 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N }}>Assessment requested</h2>
           <p style={{ color: MU, marginTop: 12, lineHeight: 1.75, fontSize: 14 }}>
-            We've received your request for <strong>{f.name || "the candidate"}</strong>. A matching judge will be assigned within 24 hours and both parties will receive private session links by email.
+            We've received your request for <strong>{f.name}</strong>. A matching judge will be assigned within 24 hours and both parties will receive private session links by email.
           </p>
           <div style={{ marginTop: 28 }}><Btn ch="Back to dashboard" onClick={() => router.push("/hr")} /></div>
         </div>
@@ -70,7 +104,8 @@ export default function HRNew() {
               <li>You receive the full report within 24 hours of the session</li>
             </ul>
           </div>
-          <Btn ch="Submit request" sz="lg" onClick={() => { if (f.name && f.email) setOk(true); }} />
+          {error && <p style={{ color: RD, fontSize: 13, marginBottom: 12 }}>{error}</p>}
+          <Btn ch={submitting ? "Submitting…" : "Submit request"} sz="lg" onClick={submit} />
         </Card>
       </div>
     </PW>
