@@ -15,11 +15,23 @@ export default function JudgeDashboard() {
 
   async function loadQueue() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      router.push("/judge/login");
+      return;
+    }
     const res = await fetch("/api/judge-queue", {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        router.push("/judge/login");
+        return;
+      }
+      setError(data.error || "Could not load your queue. Try refreshing.");
+      setQueue({ busy: false, requests: [] });
+      return;
+    }
     setQueue(data);
   }
 
