@@ -107,9 +107,17 @@ export default function HRDash() {
                         ) : <span style={{ color: MU }}>Awaiting judge</span>}
                       </td>
                       <td style={{ padding: "14px 12px" }}>
-                        {result
-                          ? <Btn ch="View result" sz="sm" onClick={() => router.push(`/hr/result?id=${a.id}`)} />
-                          : <span style={{ color: MU, fontSize: 12 }}>—</span>}
+                        {result ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <span style={{ fontFamily: ffH, fontWeight: 800, fontSize: 18, lineHeight: 1, color: result.delta_score <= -2 ? RD : GR, position: "relative", display: "inline-block" }}>
+                              {result.knowledge_score}
+                              <span style={{ fontSize: 11, fontWeight: 700, marginLeft: 1, position: "relative", top: "-0.6em" }}>{result.delta_score > 0 ? "+" : ""}{result.delta_score}</span>
+                            </span>
+                            <Btn ch="Details" sz="sm" onClick={() => router.push(`/hr/result?id=${a.id}`)} />
+                          </div>
+                        ) : (
+                          <span style={{ color: MU, fontSize: 12 }}>—</span>
+                        )}
                       </td>
                     </tr>
                   );
