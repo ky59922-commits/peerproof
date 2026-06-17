@@ -32,7 +32,8 @@ export default function Admin() {
         sub={`Operations dashboard${adminName ? ` — ${adminName}` : ""}`}
         action={
           <div style={{ display: "flex", gap: 10 }}>
-            <Btn ch="Applications" onClick={() => router.push("/admin/applications")} />
+            <Btn ch="Company Applications" onClick={() => router.push("/admin/applications")} />
+            <Btn ch="Judge Applications" onClick={() => router.push("/admin/judge-applications")} />
             <Btn ch="Log out" v="ghost" onClick={logout} />
           </div>
         }
@@ -62,7 +63,7 @@ export default function Admin() {
           <div style={{ marginTop: 14 }}><Btn ch="View all assessments" v="ghost" sz="sm" onClick={() => router.push("/hr")} /></div>
         </Card>
         <Card>
-          <h2 style={{ fontFamily: ffH, fontSize: 16, fontWeight: 700, color: N, marginBottom: 16 }}>Judge pool — UTokyo cohort</h2>
+          <h2 style={{ fontFamily: ffH, fontSize: 16, fontWeight: 700, color: N, marginBottom: 16 }}>Judge pool — UTokyo cohort <span style={{ fontSize: 11, fontWeight: 400, color: MU }}>(demo data)</span></h2>
           {judges.map(j => (
             <div key={j.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${BR}` }}>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -72,7 +73,7 @@ export default function Admin() {
               <div style={{ textAlign: "right" }}><div style={{ fontSize: 13, fontWeight: 600, color: GR }}>★ {j.rating}</div><div style={{ fontSize: 12, color: MU }}>{j.sessions} sessions</div></div>
             </div>
           ))}
-          <div style={{ marginTop: 14 }}><Btn ch="+ Invite judge" v="ghost" sz="sm" /></div>
+          <div style={{ marginTop: 14 }}><Btn ch="Review judge applications" v="ghost" sz="sm" onClick={() => router.push("/admin/judge-applications")} /></div>
         </Card>
       </div>
     </PW>

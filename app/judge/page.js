@@ -1,45 +1,129 @@
 'use client';
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Btn, Card, Sep, PW } from "@/components/ui";
-import { N, TE, TEL, MU, TX, ffH } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
+import { useRequireJudge } from "@/lib/useRequireJudge";
+import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
+import { N, GR, TE, TEL, MU, BR, RD, ffH } from "@/lib/theme";
 
-export default function JudgeBrief() {
+export default function JudgeDashboard() {
   const router = useRouter();
+  const { checking, judge } = useRequireJudge();
+  const [queue, setQueue] = useState(null);
+  const [error, setError] = useState("");
+  const [acceptingId, setAcceptingId] = useState(null);
+
+  async function loadQueue() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch("/api/judge-queue", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const data = await res.json();
+    setQueue(data);
+  }
+
+  useEffect(() => { if (!checking) loadQueue(); }, [checking]);
+
+  async function logout() {
+    await supabase.auth.signOut();
+    router.push("/judge/login");
+  }
+
+  async function accept(assessmentId, slotId) {
+    setAcceptingId(slotId);
+    setError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/judge-accept", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ assessmentId, slotId }),
+    });
+    const data = await res.json();
+    setAcceptingId(null);
+    if (!res.ok) {
+      setError(data.error || "Something went wrong.");
+      loadQueue();
+      return;
+    }
+    loadQueue();
+  }
+
+  if (checking || queue === null) {
+    return <PW><div style={{ padding: 60, textAlign: "center", color: MU }}>Checking access…</div></PW>;
+  }
+
+  const fmtSlot = t => new Date(t).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
   return (
     <PW>
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 24px" }}>
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ fontSize: 36, fontFamily: ffH, fontWeight: 800, color: TE }}>Δ</div>
-          <h1 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N, margin: "8px 0 4px" }}>Judge briefing</h1>
-          <p style={{ color: MU, fontSize: 13 }}>Read carefully before your session</p>
-        </div>
-        <Card sx={{ marginBottom: 18, borderLeft: `4px solid ${TE}`, borderRadius: "0 12px 12px 0" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: MU, letterSpacing: "0.06em", marginBottom: 14 }}>CANDIDATE PROFILE — UNVERIFIED CV CLAIMS</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-            {[["Claimed degree", "Master's in Computer Science"], ["Claimed university", "Osaka University"], ["Claimed field", "Machine Learning / AI"], ["Claimed experience", "3 years research (NLP focus)"]].map(([k, v]) => (
-              <div key={k}><div style={{ fontSize: 11, color: MU, marginBottom: 2 }}>{k}</div><div style={{ fontSize: 14, fontWeight: 600, color: TX }}>{v}</div></div>
-            ))}
-          </div>
-          <Sep />
-          <div style={{ fontSize: 11, fontWeight: 600, color: MU, marginBottom: 6 }}>HR NOTE</div>
-          <p style={{ fontSize: 13, color: TX, fontStyle: "italic", lineHeight: 1.65 }}>"Candidate claims 3 years of ML research experience in NLP. Please probe this specifically."</p>
-        </Card>
-        <Card sx={{ marginBottom: 18 }}>
-          <h3 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 14 }}>Session guidelines</h3>
-          {[["🕐", "Keep the session to 20–30 minutes."], ["🔒", "Do not reveal your name, institution, or level. You are fully anonymous."], ["📋", "Ask at least 2 technical questions, 1 methodology question, and 1 'explain simply' question."], ["⚖️", "Be fair. Nerves ≠ incompetence. Probe gently but clearly."], ["✍️", "You will score after the session. Take brief notes during if needed."]].map(([ic, t]) => (
-            <div key={t} style={{ display: "flex", gap: 10, marginBottom: 10 }}><span style={{ fontSize: 14 }}>{ic}</span><span style={{ fontSize: 13, color: MU, lineHeight: 1.6 }}>{t}</span></div>
-          ))}
-        </Card>
-        <Card sx={{ marginBottom: 28, background: TEL, border: `1px solid ${TE}28` }}>
-          <h3 style={{ fontFamily: ffH, fontSize: 14, fontWeight: 700, color: TE, marginBottom: 10 }}>Suggested probe questions</h3>
-          <ol style={{ paddingLeft: 16, fontSize: 13, color: MU, lineHeight: 2, margin: 0 }}>
-            <li>Can you describe your Master's research in your own words?</li>
-            <li>Which NLP architectures have you used, and why did you choose them?</li>
-            <li>What does the attention mechanism do in a transformer? Explain without jargon.</li>
-            <li>If your model results were unexpected, how would you diagnose the issue?</li>
-          </ol>
-        </Card>
-        <Btn ch="Start session" sz="lg" onClick={() => router.push("/judge/meeting")} full />
+      <TopBar
+        label="JUDGE PORTAL"
+        sub={`Judge ${judge.code}`}
+        action={<Btn ch="Log out" v="ghost" onClick={logout} />}
+      />
+      <div style={{ padding: "28px 36px", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
+        <Stat label="Sessions completed" val={judge.sessions_completed ?? 0} color={N} />
+        <Stat label="Rating" val={judge.rating ? `★ ${judge.rating}` : "—"} color={GR} />
+        <Stat label="Field" val={judge.field} color={TE} />
+      </div>
+      <div style={{ padding: "0 36px 36px" }}>
+        {queue.busy ? (
+          <Card sx={{ background: TEL, border: `1px solid ${TE}44` }}>
+            <h2 style={{ fontFamily: ffH, fontSize: 17, fontWeight: 700, color: N, marginBottom: 16 }}>Your upcoming session</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 11, color: MU, marginBottom: 2 }}>Scheduled for</div>
+                <div style={{ fontWeight: 700, color: N, fontSize: 15 }}>
+                  {queue.activeSession?.scheduledAt ? fmtSlot(queue.activeSession.scheduledAt) : "—"}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: MU, marginBottom: 2 }}>Candidate</div>
+                <div style={{ fontWeight: 700, color: N, fontSize: 15 }}>
+                  {queue.activeSession?.candidateDegree} · {queue.activeSession?.candidateField}
+                </div>
+              </div>
+            </div>
+            {queue.activeSession?.hrNotes && (
+              <p style={{ fontSize: 13, color: MU, fontStyle: "italic", marginBottom: 14 }}>"{queue.activeSession.hrNotes}"</p>
+            )}
+            <Btn ch="Join interview" sz="lg" onClick={() => router.push(`/judge/meeting?s=${queue.activeSession.sessionId}`)} />
+            <p style={{ fontSize: 12, color: MU, lineHeight: 1.7, marginTop: 12, marginBottom: 0 }}>
+              You can join the call directly from here. New requests will reappear in your queue once this session is scored.
+            </p>
+          </Card>
+        ) : (
+          <Card>
+            <h2 style={{ fontFamily: ffH, fontSize: 17, fontWeight: 700, color: N, marginBottom: 4 }}>Open requests in your field</h2>
+            <p style={{ fontSize: 13, color: MU, marginBottom: 16 }}>Accept any time slot that works for you. First to accept locks it in — you can only hold one active session at a time.</p>
+            {error && <p style={{ color: RD, fontSize: 13, marginBottom: 14 }}>{error}</p>}
+            {queue.requests.length === 0 ? (
+              <p style={{ color: MU, fontSize: 14 }}>No open requests right now. Check back later.</p>
+            ) : (
+              queue.requests.map(req => (
+                <div key={req.id} style={{ borderBottom: `1px solid ${BR}`, padding: "14px 0" }}>
+                  <div style={{ marginBottom: 8 }}>
+                    <Badge label={req.candidate_degree} color={N} />
+                    <span style={{ fontSize: 13, color: MU, marginLeft: 8 }}>{req.candidate_field}</span>
+                  </div>
+                  {req.hr_notes && <p style={{ fontSize: 13, color: MU, fontStyle: "italic", marginBottom: 10 }}>"{req.hr_notes}"</p>}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {(req.proposed_slots || []).map(slot => (
+                      <Btn
+                        key={slot.id}
+                        sz="sm"
+                        v="ghost"
+                        ch={acceptingId === slot.id ? "Accepting…" : fmtSlot(slot.slot_time)}
+                        onClick={() => accept(req.id, slot.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </Card>
+        )}
       </div>
     </PW>
   );

@@ -1,15 +1,52 @@
 'use client';
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { useRequireJudge } from "@/lib/useRequireJudge";
 import { Btn, Card, PW } from "@/components/ui";
 import { N, TE, TEL, MU, TX, BR, RD, RDL, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
 
-export default function JudgeScore() {
+function Content() {
+  const router = useRouter();
+  const { checking } = useRequireJudge();
+  const params = useSearchParams();
+  const sessionId = params.get("s");
   const [k, setK] = useState(null);
   const [d, setD] = useState(null);
   const [notes, setNotes] = useState("");
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const needsNote = d !== null && d <= -2;
-  const canSubmit = k !== null && d !== null && (!needsNote || notes.length > 20);
+  const canSubmit = k !== null && d !== null && (!needsNote || notes.length > 20) && !!sessionId;
+
+  async function submit() {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setSubmitting(false);
+      setError("Your session has expired. Please log in again to submit this score.");
+      return;
+    }
+    const res = await fetch("/api/judge-submit-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ sessionId, knowledgeScore: k, deltaScore: d, notes }),
+    });
+    const data = await res.json();
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(data.error || "Something went wrong.");
+      return;
+    }
+    setDone(true);
+  }
+
+  if (checking) {
+    return <PW><div style={{ padding: 60, textAlign: "center", color: MU }}>Checking access…</div></PW>;
+  }
 
   if (done) {
     return (
@@ -31,6 +68,11 @@ export default function JudgeScore() {
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "36px 24px" }}>
         <h1 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N, marginBottom: 6 }}>Score the candidate</h1>
         <p style={{ color: MU, fontSize: 14, marginBottom: 28 }}>Base your assessment only on what you observed during the session.</p>
+        {!sessionId && (
+          <Card sx={{ marginBottom: 18, background: "#fffbeb", border: "1px solid #fde68a" }}>
+            <p style={{ fontSize: 13, color: "#b45309" }}>No session reference found — this page was opened without a session link, so scoring can't be saved. Please return to the meeting and end the call normally to get here.</p>
+          </Card>
+        )}
         <Card sx={{ marginBottom: 18 }}>
           <h3 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 16 }}>Knowledge score <span style={{ color: RD }}>*</span></h3>
           {Object.entries(KNOWLEDGE).map(([key, v]) => (
@@ -61,11 +103,30 @@ export default function JudgeScore() {
           {needsNote && <div style={{ background: RDL, borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 12, color: RD, fontWeight: 600 }}>⚠ A Δ ≤ −2 score requires written justification before submitting.</div>}
           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={5} placeholder="e.g. Candidate demonstrated awareness of basic ML concepts but was unable to explain transformer architecture in depth…" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${needsNote && notes.length < 20 ? RD : BR}`, fontSize: 13, fontFamily: ff, resize: "vertical", boxSizing: "border-box" }} />
         </Card>
+        {error && (
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ color: RD, fontSize: 13, marginBottom: error.includes("expired") ? 8 : 0 }}>{error}</p>
+            {error.includes("expired") && (
+              <>
+                <Btn ch="Log in again" sz="sm" onClick={() => router.push("/judge/login")} />
+                <p style={{ fontSize: 12, color: MU, marginTop: 6 }}>After logging in, click "Join interview" on your dashboard, then end the call again to return here.</p>
+              </>
+            )}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Btn ch="Submit assessment" sz="lg" v={canSubmit ? "primary" : "ghost"} onClick={() => canSubmit && setDone(true)} />
-          {!canSubmit && <span style={{ fontSize: 12, color: MU }}>Complete all required fields above</span>}
+          <Btn ch={submitting ? "Submitting…" : "Submit assessment"} sz="lg" v={canSubmit ? "primary" : "ghost"} onClick={submit} />
+          {!canSubmit && !submitting && <span style={{ fontSize: 12, color: MU }}>Complete all required fields above</span>}
         </div>
       </div>
     </PW>
+  );
+}
+
+export default function JudgeScore() {
+  return (
+    <Suspense fallback={null}>
+      <Content />
+    </Suspense>
   );
 }

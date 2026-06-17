@@ -1,10 +1,14 @@
 'use client';
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Btn, Card, PW } from "@/components/ui";
 import { N, TE, TEL, MU, TX, ffH } from "@/lib/theme";
 
-export default function CandWelcome() {
+function Content() {
   const router = useRouter();
+  const params = useSearchParams();
+  const sessionId = params.get("s");
+
   return (
     <PW>
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "56px 24px", textAlign: "center" }}>
@@ -28,9 +32,27 @@ export default function CandWelcome() {
             </div>
           ))}
         </Card>
+        {!sessionId && (
+          <p style={{ fontSize: 13, color: "#b45309", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: 10, marginBottom: 16, textAlign: "left" }}>
+            This link is missing a session reference. Please use the exact link sent to you by the company — copying just part of it won't work.
+          </p>
+        )}
         <p style={{ fontSize: 12, color: MU, lineHeight: 1.7, marginBottom: 20 }}>By clicking "Join session" you consent to recording and its transmission to the requesting company's HR department.</p>
-        <Btn ch="Join session" sz="lg" onClick={() => router.push("/candidate/meeting")} full />
+        <Btn
+          ch="Join session"
+          sz="lg"
+          full
+          onClick={() => router.push(sessionId ? `/candidate/meeting?s=${sessionId}` : "/candidate/meeting")}
+        />
       </div>
     </PW>
+  );
+}
+
+export default function CandWelcome() {
+  return (
+    <Suspense fallback={null}>
+      <Content />
+    </Suspense>
   );
 }

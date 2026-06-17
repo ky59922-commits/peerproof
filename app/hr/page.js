@@ -11,13 +11,14 @@ export default function HRDash() {
   const { checking, user } = useRequireCompanyUser();
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     if (checking) return;
     async function load() {
       const { data, error } = await supabase
         .from("assessments")
-        .select("*, results(*)")
+        .select("*, results(*), sessions(id, scheduled_at)")
         .order("created_at", { ascending: false });
       if (!error) setAssessments(data || []);
       setLoading(false);
@@ -30,6 +31,13 @@ export default function HRDash() {
     router.push("/hr/login");
   }
 
+  async function copyLink(sessionId, assessmentId) {
+    const link = `${window.location.origin}/candidate?s=${sessionId}`;
+    await navigator.clipboard.writeText(link);
+    setCopiedId(assessmentId);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
   if (checking) {
     return <PW><div style={{ padding: 60, textAlign: "center", color: MU }}>Checking access…</div></PW>;
   }
@@ -37,6 +45,8 @@ export default function HRDash() {
   const done = assessments.filter(a => a.status === "completed").length;
   const prog = assessments.filter(a => a.status === "in_progress").length;
   const flags = assessments.filter(a => (a.results?.[0]?.delta_score ?? 0) <= -2).length;
+
+  const fmtSlot = t => new Date(t).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   return (
     <PW>
@@ -67,7 +77,7 @@ export default function HRDash() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${BR}` }}>
-                  {["Candidate", "Field", "Degree", "Status", "Date", "Result"].map(h => (
+                  {["Candidate", "Field", "Degree", "Status", "Requested", "Scheduled", "Result"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: MU, fontSize: 12, fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
@@ -75,6 +85,8 @@ export default function HRDash() {
               <tbody>
                 {assessments.map(a => {
                   const result = a.results?.[0];
+                  const scheduledAt = a.sessions?.[0]?.scheduled_at;
+                  const sessionId = a.sessions?.[0]?.id;
                   return (
                     <tr key={a.id} style={{ borderBottom: `1px solid ${BR}` }}>
                       <td style={{ padding: "14px 12px", fontWeight: 600 }}>{a.candidate_name}</td>
@@ -82,6 +94,18 @@ export default function HRDash() {
                       <td style={{ padding: "14px 12px" }}><Badge label={a.candidate_degree} color={N} /></td>
                       <td style={{ padding: "14px 12px" }}><Badge label={STL[a.status] || a.status} color={STC[a.status] || MU} /></td>
                       <td style={{ padding: "14px 12px", color: MU, fontSize: 13 }}>{new Date(a.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: "14px 12px", color: MU, fontSize: 13 }}>
+                        {scheduledAt ? (
+                          <>
+                            <div>{fmtSlot(scheduledAt)}</div>
+                            {sessionId && (
+                              <button onClick={() => copyLink(sessionId, a.id)} style={{ background: "none", border: "none", color: "#2a9d8f", fontSize: 11, cursor: "pointer", padding: 0, marginTop: 2 }}>
+                                {copiedId === a.id ? "Copied!" : "Copy candidate link"}
+                              </button>
+                            )}
+                          </>
+                        ) : <span style={{ color: MU }}>Awaiting judge</span>}
+                      </td>
                       <td style={{ padding: "14px 12px" }}>
                         {result
                           ? <Btn ch="View result" sz="sm" onClick={() => router.push(`/hr/result?id=${a.id}`)} />

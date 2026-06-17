@@ -58,6 +58,7 @@ export default function MeetingRoom({ isJudge, nextPath, sessionId = "demo-sessi
         if (!mediaStarted) {
           mediaStarted = true;
           setStatus("Connected");
+          startTimer();
           if (retryTimerRef.current) clearInterval(retryTimerRef.current);
           setRecording(true); // shown on both sides for consent transparency
           if (!isJudge) {
@@ -144,6 +145,7 @@ export default function MeetingRoom({ isJudge, nextPath, sessionId = "demo-sessi
     return () => {
       mounted = false;
       if (retryTimerRef.current) clearInterval(retryTimerRef.current);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       screenshotTimersRef.current.forEach(clearTimeout);
       pcRef.current?.close();
       channelRef.current?.unsubscribe();
@@ -151,11 +153,10 @@ export default function MeetingRoom({ isJudge, nextPath, sessionId = "demo-sessi
     };
   }, [sessionId, isJudge]);
 
-  // Countdown timer
-  useEffect(() => {
+  function startTimer() {
+    if (timerIntervalRef.current) return; // already running, don't double-start
     timerIntervalRef.current = setInterval(() => setSecs(s => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(timerIntervalRef.current);
-  }, []);
+  }
 
   async function startRecording(localStream, remoteStream) {
     try {
@@ -235,7 +236,7 @@ export default function MeetingRoom({ isJudge, nextPath, sessionId = "demo-sessi
     pcRef.current?.close();
     channelRef.current?.unsubscribe();
     localStreamRef.current?.getTracks().forEach(t => t.stop());
-    router.push(nextPath);
+    router.push(`${nextPath}?s=${sessionId}`);
   }
 
   async function endSession() {
