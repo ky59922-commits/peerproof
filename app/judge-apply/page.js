@@ -54,6 +54,11 @@ export default function JudgeApply() {
       setError("Something went wrong: " + insertError.message);
       return;
     }
+    fetch("/api/notify-judge-application", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: f.name, email: f.university_email }),
+    }).catch(() => {});
     setOk(true);
   }
 

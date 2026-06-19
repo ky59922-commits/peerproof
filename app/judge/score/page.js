@@ -6,6 +6,26 @@ import { useRequireJudge } from "@/lib/useRequireJudge";
 import { Btn, Card, PW } from "@/components/ui";
 import { N, TE, TEL, MU, TX, BR, RD, RDL, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
 
+const NOTE_CATEGORIES = [
+  { label: "Could not explain the most basic concept in their field", type: "negative" },
+  { label: "Description of research project lacks specific details", type: "negative" },
+  { label: "Could not name methodology, tools, or techniques used", type: "negative" },
+  { label: "Answers felt rehearsed or generic, not grounded in real experience", type: "negative" },
+  { label: "Contradicted specific details from their claimed background", type: "negative" },
+  { label: "Unable to discuss limitations or challenges of their own work", type: "negative" },
+  { label: "Vague or inconsistent about timeline of claimed experience", type: "negative" },
+  { label: "Demonstrated detailed, specific knowledge matching their claims", type: "positive" },
+  { label: "Clearly explained methodology and reasoning behind their work", type: "positive" },
+  { label: "Provided specific, verifiable details (names, tools, publications)", type: "positive" },
+  { label: "Communication or language barrier affected the assessment", type: "neutral" },
+];
+
+const TAG_COLORS = {
+  negative: { bg: RDL, strong: RD, text: RD },
+  positive: { bg: "#f0fdf4", strong: "#16a34a", text: "#16a34a" },
+  neutral: { bg: "#fffbeb", strong: "#b45309", text: "#b45309" },
+};
+
 function Content() {
   const router = useRouter();
   const { checking } = useRequireJudge();
@@ -13,12 +33,23 @@ function Content() {
   const sessionId = params.get("s");
   const [k, setK] = useState(null);
   const [d, setD] = useState(null);
-  const [notes, setNotes] = useState("");
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [comments, setComments] = useState("");
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  function toggleTag(tag) {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  }
+
+  const combinedNotes = [
+    selectedTags.length > 0 ? selectedTags.map(t => `• ${t}`).join("\n") : "",
+    comments.trim(),
+  ].filter(Boolean).join("\n\n");
+
   const needsNote = d !== null && d <= -2;
-  const canSubmit = k !== null && d !== null && (!needsNote || notes.length > 20) && !!sessionId;
+  const canSubmit = k !== null && d !== null && (!needsNote || combinedNotes.length > 20) && !!sessionId;
 
   async function submit() {
     if (!canSubmit) return;
@@ -33,7 +64,7 @@ function Content() {
     const res = await fetch("/api/judge-submit-score", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ sessionId, knowledgeScore: k, deltaScore: d, notes }),
+      body: JSON.stringify({ sessionId, knowledgeScore: k, deltaScore: d, notes: combinedNotes }),
     });
     const data = await res.json();
     setSubmitting(false);
@@ -99,9 +130,36 @@ function Content() {
           <h3 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 4 }}>
             Assessment notes {needsNote && <span style={{ color: RD, fontSize: 13 }}>* Required for Δ ≤ −2</span>}
           </h3>
-          <p style={{ fontSize: 12, color: MU, marginBottom: 10 }}>Shared with HR, anonymised. Be specific about what you observed.</p>
-          {needsNote && <div style={{ background: RDL, borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 12, color: RD, fontWeight: 600 }}>⚠ A Δ ≤ −2 score requires written justification before submitting.</div>}
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={5} placeholder="e.g. Candidate demonstrated awareness of basic ML concepts but was unable to explain transformer architecture in depth…" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${needsNote && notes.length < 20 ? RD : BR}`, fontSize: 13, fontFamily: ff, resize: "vertical", boxSizing: "border-box" }} />
+          <p style={{ fontSize: 12, color: MU, marginBottom: 12 }}>Shared with HR, anonymised. Select anything that applies, then add specifics below.</p>
+          {needsNote && <div style={{ background: RDL, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 12, color: RD, fontWeight: 600 }}>⚠ A Δ ≤ −2 score requires written justification before submitting.</div>}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+            {NOTE_CATEGORIES.map(cat => {
+              const c = TAG_COLORS[cat.type];
+              const isSelected = selectedTags.includes(cat.label);
+              return (
+                <button
+                  key={cat.label}
+                  type="button"
+                  onClick={() => toggleTag(cat.label)}
+                  style={{
+                    padding: "7px 12px",
+                    borderRadius: 20,
+                    border: `1.5px solid ${isSelected ? c.strong : c.bg}`,
+                    background: c.bg,
+                    color: c.text,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: ff,
+                  }}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: N, display: "block", marginBottom: 6 }}>Additional details or supporting comments</label>
+          <textarea value={comments} onChange={e => setComments(e.target.value)} rows={4} placeholder="e.g. Specifically, when asked about transformer attention mechanisms, the candidate could only describe…" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${needsNote && combinedNotes.length < 20 ? RD : BR}`, fontSize: 13, fontFamily: ff, resize: "vertical", boxSizing: "border-box" }} />
         </Card>
         {error && (
           <div style={{ marginBottom: 12 }}>

@@ -29,6 +29,25 @@ export default function Applications() {
 
   useEffect(() => { if (!checking) refresh(); }, [checking]);
 
+  async function notifyCompanyDecision(decision, app, code) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await fetch("/api/notify-company-decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          decision,
+          contactName: app.contact_name,
+          contactEmail: app.contact_email,
+          companyName: app.company_name,
+          joinCode: code || null,
+          signupUrl: `${window.location.origin}/hr/signup`,
+        }),
+      });
+    } catch (e) { /* best-effort */ }
+  }
+
   async function approve(app) {
     const code = generateJoinCode();
     const { data: company, error: companyError } = await supabase
@@ -49,11 +68,13 @@ export default function Applications() {
       return;
     }
     setApprovedInfo({ companyName: app.company_name, code, email: app.contact_email });
+    notifyCompanyDecision("approved", app, code);
     refresh();
   }
 
   async function reject(app) {
     await supabase.from("company_applications").update({ status: "rejected" }).eq("id", app.id);
+    notifyCompanyDecision("rejected", app, null);
     refresh();
   }
 

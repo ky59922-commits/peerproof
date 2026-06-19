@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { sendEmail } from "@/lib/email";
+import { reportReady } from "@/lib/emailTemplates";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -37,7 +39,7 @@ export async function POST(request) {
     // The session must actually belong to this judge — never trust the client alone
     const { data: sessionRow } = await supabaseAdmin
       .from("sessions")
-      .select("id, assessment_id, judge_id, assessments(status)")
+      .select("id, assessment_id, judge_id, round, assessments(status)")
       .eq("id", sessionId)
       .maybeSingle();
 
@@ -53,6 +55,7 @@ export async function POST(request) {
       knowledge_score: knowledgeScore,
       delta_score: deltaScore,
       judge_notes: notes || null,
+      round: sessionRow.round || 1,
     });
 
     if (resultError) {
@@ -63,6 +66,37 @@ export async function POST(request) {
     await supabaseAdmin.from("assessments").update({ status: "completed" }).eq("id", sessionRow.assessment_id);
     await supabaseAdmin.from("sessions").update({ ended_at: new Date().toISOString() }).eq("id", sessionId);
     await supabaseAdmin.from("judges").update({ sessions_completed: (judge.sessions_completed || 0) + 1 }).eq("id", judge.id);
+
+    // ---- Report-ready notification to HR (best-effort) ----
+    try {
+      const { data: assessment } = await supabaseAdmin
+        .from("assessments")
+        .select("candidate_name, created_by")
+        .eq("id", sessionRow.assessment_id)
+        .maybeSingle();
+
+      if (assessment?.created_by) {
+        const { data: cu } = await supabaseAdmin
+          .from("company_users")
+          .select("user_id")
+          .eq("id", assessment.created_by)
+          .maybeSingle();
+        if (cu?.user_id) {
+          const { data: hrUser } = await supabaseAdmin.auth.admin.getUserById(cu.user_id);
+          const hrEmail = hrUser?.user?.email;
+          if (hrEmail) {
+            const origin = new URL(request.url).origin;
+            const tpl = reportReady({
+              candidateName: assessment.candidate_name,
+              resultUrl: `${origin}/hr/result?id=${sessionRow.assessment_id}`,
+            });
+            await sendEmail({ to: hrEmail, subject: tpl.subject, html: tpl.html });
+          }
+        }
+      }
+    } catch (notifyErr) {
+      console.error("report-ready notification failed:", notifyErr.message);
+    }
 
     return Response.json({ success: true });
   } catch (e) {

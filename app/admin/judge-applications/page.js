@@ -35,6 +35,7 @@ export default function JudgeApplications() {
     const label = generateCode(3, LABEL_CHARS);
     const { data: judge, error: judgeError } = await supabase.from("judges").insert({
       code: label,
+      name: app.name,
       field: app.field,
       level: app.degree_level,
       university: app.university,
@@ -60,11 +61,31 @@ export default function JudgeApplications() {
       return;
     }
     setApprovedInfo({ name: app.name, code: signupCode, email: app.university_email });
+    notifyJudgeDecision("approved", app, signupCode);
     refresh();
+  }
+
+  async function notifyJudgeDecision(decision, app, code) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await fetch("/api/notify-judge-decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          decision,
+          name: app.name,
+          email: app.university_email,
+          signupCode: code || null,
+          signupUrl: `${window.location.origin}/judge/signup`,
+        }),
+      });
+    } catch (e) { /* best-effort */ }
   }
 
   async function reject(app) {
     await supabase.from("judge_applications").update({ status: "rejected" }).eq("id", app.id);
+    notifyJudgeDecision("rejected", app, null);
     refresh();
   }
 

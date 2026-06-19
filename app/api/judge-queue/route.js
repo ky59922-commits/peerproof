@@ -31,7 +31,7 @@ export async function GET(request) {
     // A judge can only have one active session at a time — fetch full details if so
     const { data: judgeSessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, scheduled_at, assessments(status, candidate_degree, candidate_field, hr_notes)")
+      .select("id, assessment_id, scheduled_at, assessments(status, candidate_degree, candidate_field, hr_notes)")
       .eq("judge_id", judge.id);
 
     const active = (judgeSessions || []).find(s => s.assessments?.status === "in_progress");
@@ -50,11 +50,15 @@ export async function GET(request) {
       });
     }
 
+    // Every assessment this judge has ever had a session for — used to exclude
+    // them from re-evaluations of a candidate they already interviewed.
+    const alreadyWorkedIds = new Set((judgeSessions || []).map(s => s.assessment_id));
+
     const judgeRank = RANK[judge.level] || 0;
 
     const { data: pendingAssessments, error: fetchError } = await supabaseAdmin
       .from("assessments")
-      .select("id, candidate_degree, candidate_field, hr_notes, created_at, proposed_slots(id, slot_time)")
+      .select("id, candidate_degree, candidate_field, hr_notes, created_at, current_round, proposed_slots(id, slot_time)")
       .eq("status", "pending")
       .eq("candidate_field", judge.field);
 
@@ -63,7 +67,7 @@ export async function GET(request) {
     }
 
     const eligible = (pendingAssessments || []).filter(
-      a => judgeRank > (RANK[a.candidate_degree] || 0)
+      a => judgeRank > (RANK[a.candidate_degree] || 0) && !alreadyWorkedIds.has(a.id)
     );
 
     return Response.json({ busy: false, requests: eligible });

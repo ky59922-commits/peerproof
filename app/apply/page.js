@@ -33,6 +33,12 @@ export default function Apply() {
       console.error(insertError);
       return;
     }
+    // Fire-and-forget confirmation email (best-effort)
+    fetch("/api/notify-company-application", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactName: f.contact_name, contactEmail: f.contact_email, companyName: f.company_name }),
+    }).catch(() => {});
     setOk(true);
   }
 
