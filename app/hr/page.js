@@ -11,7 +11,7 @@ export default function HRDash() {
   const { checking, user } = useRequireCompanyUser();
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [copiedId, setCopiedId] = useState(null);
+  const [resentId, setResentId] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState("");
 
@@ -34,11 +34,28 @@ export default function HRDash() {
     router.push("/hr/login");
   }
 
-  async function copyLink(sessionId, assessmentId) {
-    const link = `${window.location.origin}/candidate?s=${sessionId}`;
-    await navigator.clipboard.writeText(link);
-    setCopiedId(assessmentId);
-    setTimeout(() => setCopiedId(null), 2000);
+  async function resendCandidateLink(assessmentId) {
+    setBusyId(assessmentId);
+    setActionError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setBusyId(null);
+      setActionError("Your session has expired. Please log in again.");
+      return;
+    }
+    const res = await fetch("/api/resend-candidate-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ assessmentId }),
+    });
+    const data = await res.json();
+    setBusyId(null);
+    if (!res.ok) {
+      setActionError(data.error || "Could not resend the link.");
+      return;
+    }
+    setResentId(assessmentId);
+    setTimeout(() => setResentId(null), 2500);
   }
 
   async function doAction(endpoint, assessmentId) {
@@ -149,9 +166,12 @@ export default function HRDash() {
                           <>
                             <div>{fmtSlot(scheduledAt)}</div>
                             {sessionId && a.status !== "completed" && (
-                              <button onClick={() => copyLink(sessionId, a.id)} style={{ background: "none", border: "none", color: "#2a9d8f", fontSize: 11, cursor: "pointer", padding: 0, marginTop: 2 }}>
-                                {copiedId === a.id ? "Copied!" : "Copy candidate link"}
-                              </button>
+                              <div style={{ marginTop: 2 }}>
+                                <span style={{ color: GR, fontSize: 11 }}>✓ Link sent to candidate</span>
+                                <button onClick={() => resendCandidateLink(a.id)} disabled={busyId === a.id} style={{ background: "none", border: "none", color: "#2a9d8f", fontSize: 11, cursor: "pointer", padding: 0, marginLeft: 8 }}>
+                                  {busyId === a.id ? "Sending…" : resentId === a.id ? "Resent!" : "Resend"}
+                                </button>
+                              </div>
                             )}
                           </>
                         ) : a.status === "cancelled" ? <span style={{ color: MU }}>—</span> : <span style={{ color: MU }}>Awaiting judge</span>}
