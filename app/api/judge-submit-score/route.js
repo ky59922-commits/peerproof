@@ -71,10 +71,11 @@ export async function POST(request) {
     try {
       const { data: assessment } = await supabaseAdmin
         .from("assessments")
-        .select("candidate_name, created_by")
+        .select("candidate_name, created_by, company_id")
         .eq("id", sessionRow.assessment_id)
         .maybeSingle();
 
+      let hrEmail = null;
       if (assessment?.created_by) {
         const { data: cu } = await supabaseAdmin
           .from("company_users")
@@ -83,16 +84,25 @@ export async function POST(request) {
           .maybeSingle();
         if (cu?.user_id) {
           const { data: hrUser } = await supabaseAdmin.auth.admin.getUserById(cu.user_id);
-          const hrEmail = hrUser?.user?.email;
-          if (hrEmail) {
-            const origin = new URL(request.url).origin;
-            const tpl = reportReady({
-              candidateName: assessment.candidate_name,
-              resultUrl: `${origin}/hr/result?id=${sessionRow.assessment_id}`,
-            });
-            await sendEmail({ to: hrEmail, subject: tpl.subject, html: tpl.html });
-          }
+          hrEmail = hrUser?.user?.email || null;
         }
+      }
+      if (!hrEmail && assessment?.company_id) {
+        const { data: company } = await supabaseAdmin
+          .from("companies")
+          .select("email")
+          .eq("id", assessment.company_id)
+          .maybeSingle();
+        hrEmail = company?.email || null;
+      }
+
+      if (hrEmail) {
+        const origin = new URL(request.url).origin;
+        const tpl = reportReady({
+          candidateName: assessment.candidate_name,
+          resultUrl: `${origin}/hr/result?id=${sessionRow.assessment_id}`,
+        });
+        await sendEmail({ to: hrEmail, subject: tpl.subject, html: tpl.html });
       }
     } catch (notifyErr) {
       console.error("report-ready notification failed:", notifyErr.message);

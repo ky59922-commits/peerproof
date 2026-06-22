@@ -113,7 +113,8 @@ export async function POST(request) {
         .eq("id", judge.id)
         .maybeSingle();
 
-      // HR creator email — assessment.created_by points at a company_users row
+      // HR email — try the creating HR user first, then fall back to the
+      // company's own contact email (every assessment has a company_id).
       let hrEmail = null;
       if (updated.created_by) {
         const { data: cu } = await supabaseAdmin
@@ -125,6 +126,14 @@ export async function POST(request) {
           const { data: hrUser } = await supabaseAdmin.auth.admin.getUserById(cu.user_id);
           hrEmail = hrUser?.user?.email || null;
         }
+      }
+      if (!hrEmail && updated.company_id) {
+        const { data: company } = await supabaseAdmin
+          .from("companies")
+          .select("email")
+          .eq("id", updated.company_id)
+          .maybeSingle();
+        hrEmail = company?.email || null;
       }
 
       const meetingUrl = `${origin}/candidate?s=${newSession.id}`;
