@@ -44,6 +44,7 @@ export default function JudgeApplications() {
       lab_info: app.lab_info,
       lab_url: app.lab_url,
       research_summary: app.research_summary,
+      languages: app.languages || [],
       program_year: app.program_year,
       signup_code: signupCode,
       active: false,
@@ -137,7 +138,14 @@ export default function JudgeApplications() {
                       {app.lab_info}
                       {app.lab_url && <div><a href={app.lab_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2a9d8f" }}>Lab page →</a></div>}
                     </td>
-                    <td style={{ padding: "14px 12px", color: MU, fontSize: 13, maxWidth: 240 }}>{app.research_summary}</td>
+                    <td style={{ padding: "14px 12px", color: MU, fontSize: 13, maxWidth: 240 }}>
+                      {app.research_summary}
+                      {app.languages && app.languages.length > 0 && (
+                        <div style={{ marginTop: 6, fontSize: 11 }}>
+                          🗣 {app.languages.map((l, i) => `${l.language} (${l.level})${i < app.languages.length - 1 ? ", " : ""}`).join("")}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: "14px 12px" }}><Badge label={app.status} color={statusColor[app.status] || MU} /></td>
                     <td style={{ padding: "14px 12px" }}>
                       {app.status === "pending" ? (

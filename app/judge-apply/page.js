@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Btn, Card, PW } from "@/components/ui";
+import { LanguagePicker } from "@/components/LanguagePicker";
 import { N, MU, RD, FIELDS, ffH, ff } from "@/lib/theme";
 
 const DEGREE_LEVELS = ["Master", "PhD", "PostDoc"];
@@ -22,6 +23,7 @@ export default function JudgeApply() {
   const [ok, setOk] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [languages, setLanguages] = useState([]);
 
   const upd = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   const updDegree = e => {
@@ -48,17 +50,13 @@ export default function JudgeApply() {
       lab_info: f.lab_info,
       lab_url: f.lab_url || null,
       research_summary: f.research_summary,
+      languages: languages,
     });
     setSubmitting(false);
     if (insertError) {
       setError("Something went wrong: " + insertError.message);
       return;
     }
-    fetch("/api/notify-judge-application", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: f.name, email: f.university_email }),
-    }).catch(() => {});
     setOk(true);
   }
 
@@ -126,6 +124,11 @@ export default function JudgeApply() {
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Describe your research in 2–3 sentences <span style={{ color: RD }}>*</span></label>
               <textarea value={f.research_summary} onChange={upd("research_summary")} rows={3} style={{ ...inp, resize: "vertical" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Languages you can interview in <span style={{ color: MU, fontWeight: 400 }}>(optional)</span></label>
+              <p style={{ fontSize: 12, color: MU, marginTop: 0, marginBottom: 10 }}>Add each language you can conduct an interview in, with your level. This helps you get matched to candidates you can assess.</p>
+              <LanguagePicker value={languages} onChange={setLanguages} font={ff} />
             </div>
           </div>
           {error && <p style={{ color: RD, fontSize: 13, marginTop: 12 }}>{error}</p>}

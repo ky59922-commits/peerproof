@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import { supabase } from "@/lib/supabase";
 import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Badge, Card, PW } from "@/components/ui";
+import { LanguageSummary } from "@/components/LanguagePicker";
 import { N, GR, MU, TX, RD, AM, BL, TE, TEL, RDL, BR, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
 
 function ResultContent() {
@@ -149,7 +150,17 @@ function ResultContent() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.text(`${assessment.candidate_field} · ${assessment.candidate_degree}${assessment.candidate_university ? " · " + assessment.candidate_university : ""}`, marginX, y);
-    y += 14;
+    y += 7;
+    if (assessment.languages && assessment.languages.length > 0) {
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      const langStr = "Languages: " + assessment.languages.map(l => `${l.language} (${l.level})`).join(", ");
+      const langLines = doc.splitTextToSize(langStr, pageWidth);
+      doc.text(langLines, marginX, y);
+      y += langLines.length * 5;
+      doc.setTextColor(0);
+    }
+    y += 7;
 
     results.forEach((result, idx) => {
       const k = result.knowledge_score;
@@ -240,6 +251,9 @@ function ResultContent() {
           <div>
             <h1 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N }}>{assessment.candidate_name}</h1>
             <p style={{ color: MU, fontSize: 14, marginTop: 4 }}>{assessment.candidate_field} · {assessment.candidate_degree} · {assessment.candidate_university}</p>
+            {assessment.languages && assessment.languages.length > 0 && (
+              <p style={{ color: MU, fontSize: 13, marginTop: 4 }}>🗣 <LanguageSummary languages={assessment.languages} /></p>
+            )}
           </div>
           <Badge label={assessment.status === "completed" ? "Completed" : (isPendingSecondRound ? "2nd opinion pending" : isInProgressSecondRound ? "2nd opinion in progress" : assessment.status)} color={assessment.status === "completed" ? GR : AM} />
         </div>

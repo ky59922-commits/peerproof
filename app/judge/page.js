@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useRequireJudge } from "@/lib/useRequireJudge";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
+import { LanguageSummary } from "@/components/LanguagePicker";
 import { N, GR, TE, TEL, MU, BR, RD, ffH } from "@/lib/theme";
 
 export default function JudgeDashboard() {
@@ -119,6 +120,11 @@ export default function JudgeDashboard() {
                     <Badge label={req.candidate_degree} color={N} />
                     <span style={{ fontSize: 13, color: MU, marginLeft: 8 }}>{req.candidate_field}</span>
                   </div>
+                  {req.languages && req.languages.length > 0 && (
+                    <div style={{ marginBottom: 8, fontSize: 12, color: MU }}>
+                      🗣 Languages: <LanguageSummary languages={req.languages} />
+                    </div>
+                  )}
                   {req.hr_notes && <p style={{ fontSize: 13, color: MU, fontStyle: "italic", marginBottom: 10 }}>"{req.hr_notes}"</p>}
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {(req.proposed_slots || []).map(slot => (

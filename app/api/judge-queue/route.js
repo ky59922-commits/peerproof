@@ -58,7 +58,7 @@ export async function GET(request) {
 
     const { data: pendingAssessments, error: fetchError } = await supabaseAdmin
       .from("assessments")
-      .select("id, candidate_degree, candidate_field, hr_notes, created_at, current_round, proposed_slots(id, slot_time)")
+      .select("id, candidate_degree, candidate_field, hr_notes, created_at, current_round, languages, proposed_slots(id, slot_time)")
       .eq("status", "pending")
       .eq("candidate_field", judge.field);
 

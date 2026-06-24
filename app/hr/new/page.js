@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Card, Sep, PW } from "@/components/ui";
+import { LanguagePicker } from "@/components/LanguagePicker";
 import { N, TE, MU, BR, RD, TEL, FIELDS, DEGREES, ffH, ff } from "@/lib/theme";
 
 export default function HRNew() {
   const router = useRouter();
   const { checking, user } = useRequireCompanyUser();
   const [f, setF] = useState({ name: "", email: "", degree: "Undergraduate", field: "Machine Learning / AI", univ: "", notes: "", slot1: "", slot2: "", slot3: "" });
+  const [languages, setLanguages] = useState([]);
   const [ok, setOk] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +40,7 @@ export default function HRNew() {
       candidate_field: f.field,
       candidate_university: f.univ || null,
       hr_notes: f.notes || null,
+      languages: languages,
     }).select().single();
 
     if (insertError) {
@@ -109,6 +112,12 @@ export default function HRNew() {
               <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Notes for judge <span style={{ color: MU, fontWeight: 400 }}>(optional)</span></label>
               <textarea value={f.notes} onChange={upd("notes")} rows={3} placeholder="e.g. Candidate claims 3 years of NLP research. Please probe this specifically." style={{ ...inp, resize: "vertical" }} />
             </div>
+          </div>
+          <Sep />
+          <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Candidate's languages <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>
+          <p style={{ fontSize: 12, color: MU, marginBottom: 14 }}>Add the languages the candidate can be interviewed in, and their level in each. Judges see this to confirm they can conduct the interview.</p>
+          <div style={{ marginBottom: 20 }}>
+            <LanguagePicker value={languages} onChange={setLanguages} font={ff} />
           </div>
           <Sep />
           <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>When is the candidate available? <span style={{ color: RD }}>*</span></h2>

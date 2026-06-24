@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useRequireAdmin } from "@/lib/useRequireAdmin";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
+import { LanguageSummary } from "@/components/LanguagePicker";
 import { N, AM, BL, GR, RD, TEL, TE, MU, BR, STC, STL, ffH } from "@/lib/theme";
 
 export default function Admin() {
@@ -158,6 +159,9 @@ export default function Admin() {
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontWeight: 600, fontSize: 14 }}>{a.candidate_name}</div>
                               <div style={{ fontSize: 12, color: MU }}>{a.candidate_field} · {a.candidate_degree}</div>
+                              {a.languages && a.languages.length > 0 && (
+                                <div style={{ fontSize: 11, color: MU, marginTop: 2 }}>🗣 <LanguageSummary languages={a.languages} /></div>
+                              )}
                               <div style={{ fontSize: 12, color: MU, marginTop: 2 }}>HR: {hrName || "—"}</div>
                               {sortedSessions.length === 0 && a.status === "pending" && (
                                 <div style={{ fontSize: 12, color: MU, marginTop: 2 }}>Judge: Not yet matched</div>
@@ -212,6 +216,9 @@ export default function Admin() {
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{j.name || `Judge ${j.code}`} <span style={{ color: MU, fontWeight: 400 }}>({j.code})</span></div>
                       <div style={{ fontSize: 12, color: MU }}>{j.field} · {j.level}</div>
+                      {j.languages && j.languages.length > 0 && (
+                        <div style={{ fontSize: 11, color: MU, marginTop: 1 }}>🗣 <LanguageSummary languages={j.languages} /></div>
+                      )}
                     </div>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
