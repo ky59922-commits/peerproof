@@ -5,13 +5,15 @@ import { supabase } from "@/lib/supabase";
 import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Card, Sep, PW } from "@/components/ui";
 import { LanguagePicker } from "@/components/LanguagePicker";
+import { FocusEditor } from "@/components/Focus";
 import { N, TE, MU, BR, RD, TEL, FIELDS, DEGREES, ffH, ff } from "@/lib/theme";
 
 export default function HRNew() {
   const router = useRouter();
   const { checking, user } = useRequireCompanyUser();
-  const [f, setF] = useState({ name: "", email: "", degree: "Undergraduate", field: "Machine Learning / AI", univ: "", notes: "", slot1: "", slot2: "", slot3: "" });
+  const [f, setF] = useState({ name: "", email: "", degree: "Undergraduate", field: "Machine Learning / AI", univ: "", slot1: "", slot2: "", slot3: "" });
   const [languages, setLanguages] = useState([]);
+  const [focus, setFocus] = useState({ tags: [], topics: "", skills: "", concerns: "" });
   const [ok, setOk] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -39,7 +41,7 @@ export default function HRNew() {
       candidate_degree: f.degree,
       candidate_field: f.field,
       candidate_university: f.univ || null,
-      hr_notes: f.notes || null,
+      focus: focus,
       languages: languages,
     }).select().single();
 
@@ -108,10 +110,11 @@ export default function HRNew() {
               <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Claimed university</label>
               <input value={f.univ} onChange={upd("univ")} placeholder="e.g. University of Tokyo" style={inp} />
             </div>
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Notes for judge <span style={{ color: MU, fontWeight: 400 }}>(optional)</span></label>
-              <textarea value={f.notes} onChange={upd("notes")} rows={3} placeholder="e.g. Candidate claims 3 years of NLP research. Please probe this specifically." style={{ ...inp, resize: "vertical" }} />
-            </div>
+          </div>
+          <Sep />
+          <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>What should the judge focus on? <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>
+          <div style={{ marginBottom: 20 }}>
+            <FocusEditor value={focus} onChange={setFocus} font={ff} />
           </div>
           <Sep />
           <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Candidate's languages <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>

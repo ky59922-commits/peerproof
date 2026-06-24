@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Badge, Card, PW } from "@/components/ui";
 import { LanguageSummary } from "@/components/LanguagePicker";
+import { FocusDisplay, hasFocus } from "@/components/Focus";
 import { N, GR, MU, TX, RD, AM, BL, TE, TEL, RDL, BR, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
 
 function ResultContent() {
@@ -160,7 +161,27 @@ function ResultContent() {
       y += langLines.length * 5;
       doc.setTextColor(0);
     }
-    y += 7;
+    y += 4;
+
+    // HR's focus areas
+    if (hasFocus(assessment.focus)) {
+      ensureSpace(14);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("Requested Focus Areas", marginX, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const fc = assessment.focus;
+      if (Array.isArray(fc.tags) && fc.tags.length > 0) {
+        renderWrapped(doc.splitTextToSize("Focus: " + fc.tags.join(", "), pageWidth), 4.5);
+      }
+      if (fc.topics && fc.topics.trim()) renderWrapped(doc.splitTextToSize("Topics to probe: " + fc.topics, pageWidth), 4.5);
+      if (fc.skills && fc.skills.trim()) renderWrapped(doc.splitTextToSize("Skills to verify: " + fc.skills, pageWidth), 4.5);
+      if (fc.concerns && fc.concerns.trim()) renderWrapped(doc.splitTextToSize("Concerns: " + fc.concerns, pageWidth), 4.5);
+      y += 8;
+    }
+    y += 3;
 
     results.forEach((result, idx) => {
       const k = result.knowledge_score;
@@ -264,6 +285,13 @@ function ResultContent() {
               A second opinion is {isPendingSecondRound ? "waiting for a judge to accept" : "currently in progress"}. The first round's result below remains valid in the meantime.
             </p>
           </div>
+        )}
+
+        {hasFocus(assessment.focus) && (
+          <Card sx={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: MU, letterSpacing: "0.06em", marginBottom: 12 }}>WHAT YOU ASKED THE JUDGE TO FOCUS ON</div>
+            <FocusDisplay focus={assessment.focus} />
+          </Card>
         )}
 
         {results.map((result, idx) => {

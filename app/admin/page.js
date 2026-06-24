@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRequireAdmin } from "@/lib/useRequireAdmin";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
 import { LanguageSummary } from "@/components/LanguagePicker";
+import { FocusDisplay, hasFocus } from "@/components/Focus";
 import { N, AM, BL, GR, RD, TEL, TE, MU, BR, STC, STL, ffH } from "@/lib/theme";
 
 export default function Admin() {
@@ -173,6 +174,12 @@ export default function Admin() {
                                 </div>
                               ))}
                               <div style={{ fontSize: 11, color: MU, marginTop: 2 }}>Created {fmtSlot(a.created_at)}</div>
+                              {hasFocus(a.focus) && (
+                                <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${BR}` }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: MU, marginBottom: 4 }}>FOCUS REQUESTED</div>
+                                  <FocusDisplay focus={a.focus} />
+                                </div>
+                              )}
                             </div>
                             <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: 180 }}>
                               <Badge label={statusLabel} color={statusColor} />

@@ -31,7 +31,7 @@ export async function GET(request) {
     // A judge can only have one active session at a time — fetch full details if so
     const { data: judgeSessions } = await supabaseAdmin
       .from("sessions")
-      .select("id, assessment_id, scheduled_at, assessments(status, candidate_degree, candidate_field, hr_notes)")
+      .select("id, assessment_id, scheduled_at, assessments(status, candidate_degree, candidate_field, focus)")
       .eq("judge_id", judge.id);
 
     const active = (judgeSessions || []).find(s => s.assessments?.status === "in_progress");
@@ -45,7 +45,7 @@ export async function GET(request) {
           scheduledAt: active.scheduled_at,
           candidateDegree: active.assessments.candidate_degree,
           candidateField: active.assessments.candidate_field,
-          hrNotes: active.assessments.hr_notes,
+          focus: active.assessments.focus,
         },
       });
     }
@@ -58,7 +58,7 @@ export async function GET(request) {
 
     const { data: pendingAssessments, error: fetchError } = await supabaseAdmin
       .from("assessments")
-      .select("id, candidate_degree, candidate_field, hr_notes, created_at, current_round, languages, proposed_slots(id, slot_time)")
+      .select("id, candidate_degree, candidate_field, hr_notes, focus, created_at, current_round, languages, proposed_slots(id, slot_time)")
       .eq("status", "pending")
       .eq("candidate_field", judge.field);
 

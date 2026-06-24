@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRequireJudge } from "@/lib/useRequireJudge";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
 import { LanguageSummary } from "@/components/LanguagePicker";
+import { FocusDisplay, hasFocus } from "@/components/Focus";
 import { N, GR, TE, TEL, MU, BR, RD, ffH } from "@/lib/theme";
 
 export default function JudgeDashboard() {
@@ -98,8 +99,11 @@ export default function JudgeDashboard() {
                 </div>
               </div>
             </div>
-            {queue.activeSession?.hrNotes && (
-              <p style={{ fontSize: 13, color: MU, fontStyle: "italic", marginBottom: 14 }}>"{queue.activeSession.hrNotes}"</p>
+            {hasFocus(queue.activeSession?.focus) && (
+              <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: N, marginBottom: 6 }}>What HR wants you to focus on</div>
+                <FocusDisplay focus={queue.activeSession.focus} />
+              </div>
             )}
             <Btn ch="Join interview" sz="lg" onClick={() => router.push(`/judge/meeting?s=${queue.activeSession.sessionId}`)} />
             <p style={{ fontSize: 12, color: MU, lineHeight: 1.7, marginTop: 12, marginBottom: 0 }}>
@@ -125,7 +129,12 @@ export default function JudgeDashboard() {
                       🗣 Languages: <LanguageSummary languages={req.languages} />
                     </div>
                   )}
-                  {req.hr_notes && <p style={{ fontSize: 13, color: MU, fontStyle: "italic", marginBottom: 10 }}>"{req.hr_notes}"</p>}
+                  {hasFocus(req.focus) && (
+                    <div style={{ background: "#f8fafc", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: N, marginBottom: 6 }}>What HR wants you to focus on</div>
+                      <FocusDisplay focus={req.focus} />
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {(req.proposed_slots || []).map(slot => (
                       <Btn
