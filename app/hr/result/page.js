@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useRequireCompanyUser } from "@/lib/useRequireCompanyUser";
 import { Btn, Badge, Card, PW } from "@/components/ui";
 import { LanguageSummary } from "@/components/LanguagePicker";
+import { ExperienceSummary } from "@/components/CandidateInfo";
 import { FocusDisplay, hasFocus } from "@/components/Focus";
 import { N, GR, MU, TX, RD, AM, BL, TE, TEL, RDL, BR, KNOWLEDGE, DELTA, ffH, ff } from "@/lib/theme";
 
@@ -150,8 +151,17 @@ function ResultContent() {
     y += 7;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text(`${assessment.candidate_field} · ${assessment.candidate_degree}${assessment.candidate_university ? " · " + assessment.candidate_university : ""}`, marginX, y);
+    doc.text(`${assessment.candidate_field} · ${assessment.candidate_degree}${assessment.candidate_university ? " · " + assessment.candidate_university : ""}${assessment.candidate_nationality ? " · " + assessment.candidate_nationality : ""}`, marginX, y);
     y += 7;
+    if (assessment.work_experience && assessment.work_experience.length > 0) {
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      const expStr = "Experience: " + assessment.work_experience.filter(e => e.field && e.field.trim()).map(e => `${e.field}${e.years ? ` (${e.years} yr${Number(e.years) === 1 ? "" : "s"})` : ""}`).join(", ");
+      const expLines = doc.splitTextToSize(expStr, pageWidth);
+      doc.text(expLines, marginX, y);
+      y += expLines.length * 5;
+      doc.setTextColor(0);
+    }
     if (assessment.languages && assessment.languages.length > 0) {
       doc.setFontSize(10);
       doc.setTextColor(80);
@@ -271,7 +281,10 @@ function ResultContent() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
           <div>
             <h1 style={{ fontFamily: ffH, fontSize: 26, fontWeight: 800, color: N }}>{assessment.candidate_name}</h1>
-            <p style={{ color: MU, fontSize: 14, marginTop: 4 }}>{assessment.candidate_field} · {assessment.candidate_degree} · {assessment.candidate_university}</p>
+            <p style={{ color: MU, fontSize: 14, marginTop: 4 }}>{assessment.candidate_field} · {assessment.candidate_degree} · {assessment.candidate_university}{assessment.candidate_nationality ? ` · ${assessment.candidate_nationality}` : ""}</p>
+            {assessment.work_experience && assessment.work_experience.length > 0 && (
+              <p style={{ color: MU, fontSize: 13, marginTop: 4 }}>💼 <ExperienceSummary experience={assessment.work_experience} /></p>
+            )}
             {assessment.languages && assessment.languages.length > 0 && (
               <p style={{ color: MU, fontSize: 13, marginTop: 4 }}>🗣 <LanguageSummary languages={assessment.languages} /></p>
             )}

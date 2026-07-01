@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRequireJudge } from "@/lib/useRequireJudge";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
 import { LanguageSummary } from "@/components/LanguagePicker";
+import { ExperienceSummary } from "@/components/CandidateInfo";
 import { FocusDisplay, hasFocus } from "@/components/Focus";
 import { N, GR, TE, TEL, MU, BR, RD, ffH } from "@/lib/theme";
 
@@ -123,7 +124,13 @@ export default function JudgeDashboard() {
                   <div style={{ marginBottom: 8 }}>
                     <Badge label={req.candidate_degree} color={N} />
                     <span style={{ fontSize: 13, color: MU, marginLeft: 8 }}>{req.candidate_field}</span>
+                    {req.candidate_nationality && <span style={{ fontSize: 13, color: MU, marginLeft: 8 }}>· {req.candidate_nationality}</span>}
                   </div>
+                  {req.work_experience && req.work_experience.length > 0 && (
+                    <div style={{ marginBottom: 8, fontSize: 12, color: MU }}>
+                      💼 Experience: <ExperienceSummary experience={req.work_experience} />
+                    </div>
+                  )}
                   {req.languages && req.languages.length > 0 && (
                     <div style={{ marginBottom: 8, fontSize: 12, color: MU }}>
                       🗣 Languages: <LanguageSummary languages={req.languages} />

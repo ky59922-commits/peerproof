@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRequireAdmin } from "@/lib/useRequireAdmin";
 import { Btn, Badge, Card, Stat, PW, TopBar } from "@/components/ui";
 import { LanguageSummary } from "@/components/LanguagePicker";
+import { ExperienceSummary } from "@/components/CandidateInfo";
 import { FocusDisplay, hasFocus } from "@/components/Focus";
 import { N, AM, BL, GR, RD, TEL, TE, MU, BR, STC, STL, ffH } from "@/lib/theme";
 
@@ -159,7 +160,10 @@ export default function Admin() {
                           <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0 10px 14px", borderTop: `1px solid ${BR}`, gap: 10, opacity: a.status === "cancelled" ? 0.6 : 1 }}>
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontWeight: 600, fontSize: 14 }}>{a.candidate_name}</div>
-                              <div style={{ fontSize: 12, color: MU }}>{a.candidate_field} · {a.candidate_degree}</div>
+                              <div style={{ fontSize: 12, color: MU }}>{a.candidate_field} · {a.candidate_degree}{a.candidate_nationality ? ` · ${a.candidate_nationality}` : ""}</div>
+                              {a.work_experience && a.work_experience.length > 0 && (
+                                <div style={{ fontSize: 11, color: MU, marginTop: 2 }}>💼 <ExperienceSummary experience={a.work_experience} /></div>
+                              )}
                               {a.languages && a.languages.length > 0 && (
                                 <div style={{ fontSize: 11, color: MU, marginTop: 2 }}>🗣 <LanguageSummary languages={a.languages} /></div>
                               )}
