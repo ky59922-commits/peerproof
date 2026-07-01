@@ -122,6 +122,12 @@ export default function HRNew() {
             </div>
           </div>
           <Sep />
+          <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Candidate's languages <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>
+          <p style={{ fontSize: 12, color: MU, marginBottom: 14 }}>Add the languages the candidate can be interviewed in, and their level in each. Judges see this to confirm they can conduct the interview.</p>
+          <div style={{ marginBottom: 20 }}>
+            <LanguagePicker value={languages} onChange={setLanguages} font={ff} />
+          </div>
+          <Sep />
           <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Work experience <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>
           <p style={{ fontSize: 12, color: MU, marginBottom: 14 }}>Add each field the candidate has worked in, and roughly how many years.</p>
           <div style={{ marginBottom: 20 }}>
@@ -146,12 +152,6 @@ export default function HRNew() {
               <FocusEditor value={focus} onChange={setFocus} font={ff} />
             </div>
           )}
-          <Sep />
-          <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Candidate's languages <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>
-          <p style={{ fontSize: 12, color: MU, marginBottom: 14 }}>Add the languages the candidate can be interviewed in, and their level in each. Judges see this to confirm they can conduct the interview.</p>
-          <div style={{ marginBottom: 20 }}>
-            <LanguagePicker value={languages} onChange={setLanguages} font={ff} />
-          </div>
           <Sep />
           <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>When is the candidate available? <span style={{ color: RD }}>*</span></h2>
           <p style={{ fontSize: 12, color: MU, marginBottom: 14 }}>Provide at least one option — more increases the chance of a quick match.</p>
