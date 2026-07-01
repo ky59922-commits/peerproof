@@ -29,6 +29,15 @@ export default function HRNew() {
       setError("Please fill in the candidate's name and email.");
       return;
     }
+    if (!nationality) {
+      setError("Please select the candidate's nationality.");
+      return;
+    }
+    const validLanguages = languages.filter(l => l.language);
+    if (validLanguages.length === 0) {
+      setError("Please add at least one language the candidate can be interviewed in.");
+      return;
+    }
     const slots = [f.slot1, f.slot2, f.slot3].filter(Boolean);
     if (slots.length === 0) {
       setError("Please provide at least one time the candidate is available.");
@@ -117,12 +126,12 @@ export default function HRNew() {
               <input value={f.univ} onChange={upd("univ")} placeholder="e.g. University of Tokyo" style={inp} />
             </div>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Nationality <span style={{ color: MU, fontWeight: 400 }}>(optional)</span></label>
+              <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Nationality <span style={{ color: RD }}>*</span></label>
               <CountrySelect value={nationality} onChange={setNationality} font={ff} />
             </div>
           </div>
           <Sep />
-          <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Candidate's languages <span style={{ color: MU, fontWeight: 400, fontSize: 13 }}>(optional)</span></h2>
+          <h2 style={{ fontFamily: ffH, fontSize: 15, fontWeight: 700, color: N, marginBottom: 6 }}>Candidate's languages <span style={{ color: RD }}>*</span></h2>
           <p style={{ fontSize: 12, color: MU, marginBottom: 14 }}>Add the languages the candidate can be interviewed in, and their level in each. Judges see this to confirm they can conduct the interview.</p>
           <div style={{ marginBottom: 20 }}>
             <LanguagePicker value={languages} onChange={setLanguages} font={ff} />
