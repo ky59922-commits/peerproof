@@ -29,5 +29,5 @@ select {
 /* Placeholder text lighter still */
 input::placeholder,
 textarea::placeholder {
-  color: #9aa6b8;
+  color: #b8c1cd;
 }
